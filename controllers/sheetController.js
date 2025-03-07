@@ -1,23 +1,48 @@
 const { google } = require('googleapis');
-require('dotenv').config();
+const dotenv = require('dotenv');
 
+dotenv.config();
+
+// Google Sheets API Setup
 const auth = new google.auth.GoogleAuth({
-  keyFile: 'google-credentials.json', 
-  scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  keyFile: 'google-credentials.json', // Path to your service account key
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 const sheets = google.sheets({ version: 'v4', auth });
 
+const SHEET_ID = process.env.SHEET_ID; // Your Google Sheets ID
+
+//  Fetch Data from Google Sheet
 exports.getSheetData = async (req, res) => {
   try {
-    const spreadsheetId = process.env.SHEET_ID;
-    const range = 'Sheet1!A1:Z100';
+    const range = 'Sheet1!A1:Z100'; // Adjust range based on your sheet
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: range,
+    });
 
-    const response = await sheets.spreadsheets.values.get({ spreadsheetId, range });
-    const data = response.data.values || [];
-
-    res.json(data);
+    res.json(response.data.values || []);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching Google Sheets data' });
+    res.status(500).json({ message: 'Error fetching sheet data', error });
   }
 };
+
+// Add Data to Google Sheet
+exports.addSheetData = async (req, res) => {
+  try {
+    const { values } = req.body; // Example: [["John Doe", "john@example.com"]]
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: 'Sheet1!A1', 
+      valueInputOption: 'RAW',
+      resource: { values },
+    });
+
+    res.json({ message: 'Data added successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding data', error });
+  }
+};
+
