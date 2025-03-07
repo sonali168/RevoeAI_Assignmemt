@@ -1,9 +1,10 @@
 const express = require('express');
-const { getSheetData } = require('../controllers/sheetController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { getSheetData, addSheetData } = require('../controllers/sheetController');
 
 const router = express.Router();
 
-router.get('/google-sheets', authMiddleware, getSheetData);
+router.get('/', getSheetData);
+router.post('/add', addSheetData);
 
 module.exports = router;
+
